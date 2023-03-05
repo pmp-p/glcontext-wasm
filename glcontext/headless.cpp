@@ -96,12 +96,16 @@ PyMethodDef module_methods[] = {
     {"devices", (PyCFunction)meth_devices, METH_NOARGS},
     {"init", (PyCFunction)meth_init, METH_VARARGS | METH_KEYWORDS},
     {"load_opengl_function", (PyCFunction)meth_load_opengl_function, METH_O},
-    {},
+    {NULL, NULL, 0, NULL},
 };
 
 PyModuleDef module_def = {PyModuleDef_HEAD_INIT, "headless", NULL, -1, module_methods};
 
-extern "C" PyObject * PyInit_headless() {
+extern "C" {
+
+PyObject * PyInit_headless() {
     PyObject * module = PyModule_Create(&module_def);
     return module;
+}
+
 }

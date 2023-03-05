@@ -1,3 +1,4 @@
+import sys
 import os
 
 __version__ = '2.3.7'
@@ -27,6 +28,12 @@ def default_backend():
     for known in PLATFORMS:
         if target.startswith(known):
             target = known
+
+
+    if sys.platform in ('emscripten','wasi'):
+        print(__file__,"34: forcing egl")
+        target = "wasm"
+        return _egl()
 
     if target not in PLATFORMS:
         target = 'linux'
@@ -78,7 +85,7 @@ def _x11():
 
     def create(*args, **kwargs):
         if not kwargs.get('libgl'):
-            kwargs['libgl'] = find_library('GL') 
+            kwargs['libgl'] = find_library('GL')
 
         if not kwargs.get('libx11'):
             kwargs['libx11'] = find_library("X11")
@@ -101,25 +108,33 @@ def _darwin():
 
     return create
 
-
 def _egl():
     from glcontext import egl
     from ctypes.util import find_library
 
     def create(*args, **kwargs):
         if not kwargs.get('libgl'):
-            kwargs['libgl'] = find_library('GL') 
+            kwargs['libgl'] = find_library('GL')
         if not kwargs.get('libegl'):
-            kwargs['libegl'] = find_library('EGL') 
+            kwargs['libegl'] = find_library('EGL')
 
         _apply_env_var(kwargs, 'device_index', 'GLCONTEXT_DEVICE_INDEX', arg_type=int)
         _apply_env_var(kwargs, 'glversion', 'GLCONTEXT_GLVERSION', arg_type=int)
         _apply_env_var(kwargs, 'libgl', 'GLCONTEXT_LINUX_LIBGL')
         _apply_env_var(kwargs, 'libegl', 'GLCONTEXT_LINUX_LIBEGL')
         kwargs = _strip_kwargs(kwargs, ['glversion', 'mode', 'libgl', 'libegl', 'device_index'])
+
+        if sys.platform == 'emscripten':
+            import json
+            json.dumps(kwargs, sort_keys=True, indent=4)
+
         return egl.create_context(**kwargs)
 
     return create
+
+#if sys.platform in ('emscripten','wasi'):
+#    print(__file__,"34: forcing x11 -> egl")
+#    _x11 = _egl
 
 
 def _strip_kwargs(kwargs: dict, supported_args: list):

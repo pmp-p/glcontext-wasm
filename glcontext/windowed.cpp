@@ -48,6 +48,24 @@ PyObject * meth_load_opengl_function(PyObject * self, PyObject * arg) {
     return PyLong_FromVoidPtr(symbol ? NSAddressOfSymbol(symbol) : NULL);
 }
 
+#elif defined(__EMSCRIPTEN__)
+
+    #warning "unsupported"
+    #include <GLES2/gl2.h>
+    #include <EGL/egl.h>
+PyObject *
+meth_load_opengl_function(PyObject * self, PyObject * arg) {
+    if (!PyUnicode_CheckExact(arg)) {
+        return NULL;
+    }
+    const char * name = PyUnicode_AsUTF8(arg);
+    return PyLong_FromVoidPtr( (void *)eglGetProcAddress((const char *)name));
+}
+
+
+
+
+
 #else
 
 #include <GL/gl.h>
